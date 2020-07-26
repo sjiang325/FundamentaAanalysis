@@ -2,6 +2,25 @@ from bs4 import BeautifulSoup
 import requests
 import pandas as pd
 
+
+def modify(string):
+    if 'M' in string:
+        n = string.replace("M", '')
+        if '(' not in string and ')' not in string:
+            return float(n)*0.001
+        else:
+            m = n.replace('(', '').replace(')', '')
+            return -float(m)*0.001
+
+    elif 'B' in string:
+        n = string.replace("B", '')
+        if '(' not in string and ')' not in string:
+            return float(n)
+        else:
+            m = n.replace('(', '').replace(')', '')
+            return -float(m)
+
+
 def basicInfo(ticker, type):
     if type != 'df' and type != 'd':
         raise ValueError('Invalid type argument!')
@@ -36,8 +55,10 @@ def basicInfo(ticker, type):
             info['Interest Expense'] = [td.text for td in title.findNextSiblings(attrs={'class': 'valueCell'}) if td.text]
         if title.text == ' EBITDA':
             info['EBITDA'] = [td.text for td in title.findNextSiblings(attrs={'class': 'valueCell'}) if td.text]
-        if title.text == "EBIT after Unusual Expense":
-            info['EBIT(after unusual expense)'] = [td.text for td in title.findNextSiblings(attrs={'class': 'valueCell'}) if td.text]
+        if title.text == " Gross Income":
+            info['Gross Income'] = [td.text for td in title.findNextSiblings(attrs={'class': 'valueCell'}) if td.text]
+        if title.text == " SG&A Expense":
+            info['SG&A Expense'] = [td.text for td in title.findNextSiblings(attrs={'class': 'valueCell'}) if td.text]
 
     #Iterate through the balance sheet
     bs_titles = bs_src.find_all('td', class_='rowTitle')
@@ -51,50 +72,30 @@ def basicInfo(ticker, type):
 
     #Calculate ROE, taking note that the unit might be in millions for some entries/companies
     info['ROE %'] = []
-    for n in range(0, len(info['Interest Expense'])):
-        if 'M' in info['Net Income'][n] and 'M' not in info['Total Shareholders\' Equity'][n]:
-            info['ROE %'].append(
-                (float(info['Net Income'][n].strip('BM'))/1000) /
-                float(info['Total Shareholders\' Equity'][n].strip('BM')) * 100)
-        elif 'M' in info['Total Shareholders\' Equity'][n] and 'M' not in info['Net Income'][n]:
-            info['ROE %'].append(
-                float(info['Net Income'][n].strip('BM')) /
-                (float(info['Total Shareholders\' Equity'][n].strip('BM'))/1000) * 100)
-        else:
-            info['ROE %'].append(float(info['Net Income'][n].strip('BM')) / float(info['Total Shareholders\' Equity'][n].strip('BM')) * 100)
+    for n in range(0, len(info['Net Income'])):
+        info['ROE %'].append((modify(info['Net Income'][n])/modify(info['Total Shareholders\' Equity'][n])) * 100)
 
     info['ROA %'] = []
     for n in range(0, len(info['Total Assets'])):
-        if 'M' in info['Net Income'][n] and 'M' not in info['Total Assets'][n]:
-            info['ROA %'].append(
-                (float(info['Net Income'][n].strip('BM')) / 1000) /
-                float(info['Total Assets'][n].strip('BM')) * 100)
-        elif 'M' in info['Total Assets'][n] and 'M' not in info['Net Income'][n]:
-            info['ROA %'].append(
-                float(info['Net Income'][n].strip('BM')) /
-                (float(info['Total Assets'][n].strip('BM')) / 1000) * 100)
-        else:
-            info['ROA %'].append(float(info['Net Income'][n].strip('BM')) / float(info['Total Assets'][n].strip('BM')) * 100)
-    info['Interest Coverage Ratio'] = []
+            info['ROA %'].append((modify(info['Net Income'][n]) /modify(info['Total Assets'][n])) * 100)
 
-    for n in range(0, len(info['EBIT(after unusual expense)'])):
-        #EBIT needs to be recaculated
-        if info['EBIT(after unusual expense)'][n] == '-':
+
+    info['EBIT'] = []
+    for n in range(0, len(info['Gross Income'])):
+        g_income = modify(info['Gross Income'][n])
+        sga = modify(info['SG&A Expense'][n])
+        ebit = g_income - sga
+        info['EBIT'].append(ebit)
+
+    info['Interest Coverage Ratio'] = []
+    for n in range(0, len(info['EBIT'])):
+        if info['EBIT'][n] == '-':
             info['Interest Coverage Ratio'].append('Unavailable')
-        elif 'M' in info['EBIT(after unusual expense)'][n] and 'M' not in info['Interest Expense'][n]:
-            info['Interest Coverage Ratio'].append(
-                (float(info['EBIT(after unusual expense)'][n].strip('BM')) / 1000) /
-                float(info['Interest Expense'][n].strip('BM')))
-        elif 'M' in info['Interest Expense'][n] and 'M' not in info['EBIT(after unusual expense)'][n]:
-            info['Interest Coverage Ratio'].append(
-                float(info['EBIT(after unusual expense)'][n].strip('BM')) /
-                (float(info['Interest Expense'][n].strip('BM')) / 1000))
+
         else:
-            #takes care the case when a negative number is represented in parenthesis, updates will take care of the problem
-            try:
-                info['Interest Coverage Ratio'].append(float(info['EBIT(after unusual expense)'][n].strip('BM')) / float(info['Interest Expense'][n].strip('BM')))
-            except:
-                info['Interest Coverage Ratio'].append(None)
+            interest = modify(info['Interest Expense'][n])
+            ratio = (info['EBIT'][n])/interest
+            info['Interest Coverage Ratio'].append(ratio)
 
 
     if type == 'df':
@@ -112,39 +113,48 @@ def basicInfo(ticker, type):
 # 4. Interest Coverage Ratio (ability to pay interest > 3)
 if __name__ == '__main__':
     ticker = input('Enter a ticker: ')
-    info = basicInfo(ticker, 'd')
-    print(f'From 2015 to 2019, the EPS of the company were '
-          f'{info["EPS (Basic)"][0]}, {info["EPS (Basic)"][1]}, {info["EPS (Basic)"][2]}, {info["EPS (Basic)"][3]}, {info["EPS (Basic)"][4]}.\n')
-    ROE_counter = 0
-    ROA_counter = 0
-    IC_counter = 0
-    for n in range(0, 5):
-        if info['ROE %'][n] < 15:
-            print(f'In {n+2015}, '
-                  f'the company demonstrated inefficiency. The ROE of that year was {info["ROE %"][n]}')
-        else:
-            ROE_counter += 1
+    option = input('Enter v to view data-frame or r to see report: ')
+    if option == 'v':
+        info = basicInfo(ticker, 'df')
+        print(info)
 
-        if info['ROA %'][n] < 7:
-            print(f'In {n + 2015}, '
-                  f'the company\'s manipulation of asset fell short. The ROA of that year was {info["ROA %"][n]}')
-        else:
-            ROA_counter += 1
-        try:
-            if info['Interest Coverage Ratio'][n] is None or info['Interest Coverage Ratio'][n] < 3:
-                print(f'In {n + 2015}, '
-                      f'the company\'s ability to pay interest was impaired. The Interest Coverage ratio of that year was {info["Interest Coverage Ratio"][n]}')
+    elif option == 'r':
+        info = basicInfo(ticker, 'd')
+        print(f'From 2015 to 2019, the EPS of the company were '
+              f'{info["EPS (Basic)"][0]}, {info["EPS (Basic)"][1]}, {info["EPS (Basic)"][2]}, {info["EPS (Basic)"][3]}, {info["EPS (Basic)"][4]}.')
+        ROE_counter = 0
+        ROA_counter = 0
+        IC_counter = 0
+        for n in range(0, 5):
+            if info['ROE %'][n] < 15:
+                print(f'In {n+2015}, '
+                      f'the company demonstrated inefficiency. The ROE of that year was {round(info["ROE %"][n], 2)}')
             else:
-                IC_counter += 1
-        except:
-            pass
-        print('')
+                ROE_counter += 1
 
-    if ROE_counter == 5:
-        print('The company had no risk in efficiency')
-    if ROA_counter == 5:
-        print('The company had no risk in manipulation of asset.')
-    if IC_counter == 5:
-        print('The company had no problem in paying their interest')
+            if info['ROA %'][n] < 7:
+                print(f'In {n + 2015}, '
+                      f'the company\'s manipulation of asset fell short. The ROA of that year was {round(info["ROA %"][n], 2)}')
+            else:
+                ROA_counter += 1
+            try:
+                if info['Interest Coverage Ratio'][n] is None or info['Interest Coverage Ratio'][n] < 3:
+                    print(f'In {n + 2015}, '
+                          f'the company\'s ability to pay interest was impaired. The Interest Coverage ratio of that year was '
+                          f'{round(info["Interest Coverage Ratio"][n], 2)}')
+                else:
+                    IC_counter += 1
+            except:
+                pass
+            print('')
 
+        if ROE_counter == 5:
+            print('The company had no risk in efficiency')
+        if ROA_counter == 5:
+            print('The company had no risk in manipulation of asset.')
+        if IC_counter == 5:
+            print('The company had no problem in paying their interest')
+
+    else:
+        print('Invalid option.')
 
