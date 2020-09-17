@@ -1,7 +1,7 @@
 from bs4 import BeautifulSoup
 import requests
 import pandas as pd
-
+import Sentiment_Analysis as sa
 
 def modify(string):
     if 'M' in string:
@@ -158,3 +158,8 @@ if __name__ == '__main__':
     else:
         print('Invalid option.')
 
+    analysis = input('Enter R to perform a sentiment analysis based on the Tweets of the given ticker: ')
+    if analysis == 'R':
+        today = input('Enter today\'s date(mm/dd/yyyy): ')
+        start = input('Enter a start date(mm/dd/yyyy): ')
+        sa.get_tweets(ticker, start, today)
