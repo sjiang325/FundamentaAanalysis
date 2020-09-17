@@ -6,6 +6,7 @@ Enter a ticker. The program will evaluate the efficiency and manipulation of a g
 You can also choose to view the dataframe or to see the completed report. A sentiment analysis could be done in the end.
 
 **Sentiment_Analysis.py**:
+
 *analyze(tweet)* 
 - kind of self-explanatory: it takes a tweet object and determines the positive/negative connotation of the tweet, returns a label object.
 
