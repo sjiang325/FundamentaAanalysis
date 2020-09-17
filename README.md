@@ -17,6 +17,6 @@ You can also choose to view the dataframe or to see the completed report. A sent
 **Modifications needed**: 
 - twitterscraper/query.py: Twitter banned front-page queries in late August, please refer to the following link for necessary modifications: https://github.com/taspinar/twitterscraper/pull/337/commits/2233682b3c04840531a94ba8ee3c3325d7bf6b4a
 
-- flair/models/text_classification_model.py: transformer3.1 would corrupt the trained model used in text-classification; a new model needs to be loaded by fixing some lines:
+- flair/models/text_classification_model.py: transformers 3.1 would corrupt the trained model used in text-classification; a new model needs to be loaded by fixing some lines:
 https://github.com/flairNLP/flair/commit/0a6e8161d99a1ef0962f885ff9a860ebfa79b975
 
