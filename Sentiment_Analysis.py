@@ -126,6 +126,5 @@ def get_tweets(ticker, start, today):
         #
         # print('The individual tweets and scores are saved to CSV files. ')
 
-get_tweets('AAPL', '06/12/2019', '09/10/2020')
 
 
