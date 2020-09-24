@@ -15,6 +15,8 @@ You can also choose to view the dataframe or to see the completed report. A sent
 - By default, the function queries three kinds of hashtags/contents: company value, forecast of company, and company performance(where "company" is substituted with the "ticker" passed in FinancialData.py. The default number of tweets processed is 25 per hashtag/content. This can be changed by modifying the limit variable in line 34. One caveat: the more you process, the longer it takes. When limit=100, it takes 23 minutes to analyze all tweets. 
 
 **Modifications needed**: 
+- Besure to run as an administrator! 
+
 - twitterscraper/query.py: Twitter banned front-page queries in late August, please refer to the following link for necessary modifications: https://github.com/taspinar/twitterscraper/pull/337/commits/2233682b3c04840531a94ba8ee3c3325d7bf6b4a
 
 - flair/models/text_classification_model.py: transformers 3.1 would corrupt the trained model used in text-classification; a new model needs to be loaded by fixing some lines:
