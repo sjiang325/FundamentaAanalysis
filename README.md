@@ -22,3 +22,7 @@ You can also choose to view the dataframe or to see the completed report. A sent
 - flair/models/text_classification_model.py: transformers 3.1 would corrupt the trained model used in text-classification; a new model needs to be loaded by fixing some lines:
 https://github.com/flairNLP/flair/commit/0a6e8161d99a1ef0962f885ff9a860ebfa79b975
 
+**QuantRisk Modules**:
+- After picking the "right" stocks, the QuantRisk notebook could calculate portfolio, benchmark, and active risks, with each risk breaking into systematic and unsystematic parts. 
+
+- All data are from Yahoo finance and Ken French's website. 
