@@ -26,3 +26,5 @@ https://github.com/flairNLP/flair/commit/0a6e8161d99a1ef0962f885ff9a860ebfa79b97
 - After picking the "right" stocks, the QuantRisk notebook could calculate portfolio, benchmark, and active risks, with each risk breaking into systematic and unsystematic parts. 
 
 - All data are from Yahoo finance and Ken French's website. 
+
+- Use the PortfolioHoldings sheet to enter holdings and weights.
