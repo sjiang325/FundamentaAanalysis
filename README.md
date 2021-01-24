@@ -1,5 +1,5 @@
 # FundamentaAanalysis
-**Requirement**: flair, PyTorch(CUDA not necessary), beautifulsoup4, and twitterscraper, with modification needed(explained below)
+**Requirement**: flair, PyTorch, beautifulsoup4, and twitterscraper, with modification needed(explained below)
 
 **FinancialData.py**:
 Enter a ticker. The program will evaluate the efficiency and manipulation of a given company. 
